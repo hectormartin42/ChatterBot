@@ -258,7 +258,7 @@ class MongoDatabaseAdapter(StorageAdapter):
         """
         self.statements.delete_one({'text': statement_text})
 
-    def get_response_statements(self, page_size=1000):
+    def get_response_statements(self, text=None, page_size=1000):
         """
         Return only statements that are in response to another statement.
         A statement must exist which lists the closest matching statement in the

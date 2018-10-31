@@ -306,14 +306,14 @@ class SQLStorageAdapter(StorageAdapter):
         session.close()
         return statement
 
-    def get_response_statements(self, page_size=1000):
+    def get_response_statements(self, text=None, page_size=1000):
         """
         Return only statements that are in response to another statement.
         A statement must exist which lists the closest matching statement in the
         in_response_to field. Otherwise, the logic adapter may find a closest
         matching statement that does not have a known response.
         """
-        from sqlalchemy import func
+        from sqlalchemy import func, or_
 
         Statement = self.get_model('statement')
 
@@ -324,10 +324,15 @@ class SQLStorageAdapter(StorageAdapter):
         start = 0
         stop = min(page_size, total_statements)
 
+        or_query = [
+            Statement.search_in_response_to.contains(trigram) for trigram in self.stemmer.stem(text or '').split(' ')
+        ]
+
         while stop <= total_statements:
 
             statement_set = session.query(Statement).filter(
-                Statement.in_response_to.isnot(None)
+                Statement.in_response_to.isnot(None),
+                or_(*or_query)
             ).slice(start, stop)
 
             start += page_size
